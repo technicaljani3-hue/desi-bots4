@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14111f">
+<title>Desi Bots</title>
+<style>
+:root{--acc:#e11d48;--bg:#14111f;--panel:#1e1a2e;--line:#332c4a;--ink:#f5f0ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,Verdana,sans-serif;display:flex;flex-direction:column;max-width:560px;margin:0 auto;box-shadow:0 0 60px #0008}
+header{background:linear-gradient(135deg,var(--acc),#0000 140%),var(--panel);padding:calc(10px + env(safe-area-inset-top,0)) 14px 10px;transition:background .3s}
+.top{display:flex;align-items:center;justify-content:space-between}
+h1{font-size:1.15rem;margin:0}
+.snd{font-size:.78rem;display:flex;gap:6px;align-items:center;cursor:pointer}
+.picker{display:flex;justify-content:space-between;margin-top:10px}
+.bot{background:none;border:0;color:inherit;font:inherit;cursor:pointer;text-align:center;flex:1;opacity:.6;transition:.2s}
+.bot[aria-pressed=true]{opacity:1}
+.avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 4px;display:grid;place-items:center;font-size:32px;background:var(--panel);border:3px solid #fff3;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.bot[aria-pressed=true] .avatar{border-color:#fff;transform:scale(1.12);box-shadow:0 4px 18px #0007}
+.bot span{font-size:.78rem;font-weight:700}
+#tag{text-align:center;font-size:.8rem;opacity:.85;margin:8px 0 0}
+#log{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;background:radial-gradient(circle at 20% 0,#2a2244 0,#0000 50%)}
+.row{display:flex;gap:8px;align-items:flex-end;max-width:88%}
+.row.me{align-self:flex-end;flex-direction:row-reverse}
+.mini{width:32px;height:32px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-size:18px;flex:none;overflow:hidden;border:2px solid var(--acc)}
+.mini img{width:100%;height:100%;object-fit:cover}
+.msg{padding:10px 14px;border-radius:18px;line-height:1.5;white-space:pre-wrap;font-size:.95rem}
+.ai .msg{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.me .msg{background:var(--acc);color:#fff;border-bottom-right-radius:4px}
+.dots span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--ink);opacity:.4;animation:b 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{50%{transform:translateY(-5px);opacity:1}}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:6px 12px}
+.chip{flex:none;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:16px;padding:6px 12px;font:inherit;font-size:.8rem;cursor:pointer}
+.bar{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0));background:var(--panel);border-top:1px solid var(--line)}
+input[type=text]{flex:1;min-width:0;padding:13px 16px;border-radius:24px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.send{width:48px;height:48px;border:0;border-radius:50%;background:var(--acc);color:#fff;font-size:20px;cursor:pointer;flex:none}
+button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header id="hd">
+  <div class="top"><h1>😂 Desi Bots</h1><label class="snd"><input type="checkbox" id="voice" checked> Awaaz</label></div>
+  <div class="picker" id="picker" role="group" aria-label="Bot chunain"></div>
+  <p id="tag"></p>
+</header>
+<div id="log" aria-live="polite"></div>
+<div class="chips" id="chips"></div>
+<div class="bar">
+  <input type="text" id="txt" placeholder="Kuch likho..." autocomplete="off">
+  <button class="send" id="go" aria-label="Bhejo">➤</button>
+</div>
+<script>
+// img: apni gol tasveer lagani ho to file ka naam likhein (jaise "saas.jpg") aur file index.html ke saath rakhein
+const BOTS={
+  saas:{name:"Saas",emoji:"👵",img:"",col:"#e11d48",tag:"Bahu/damaad ban kar mashwra maango",hi:"Aa gayi? Pehle ye batao, ghar ka kaam khatam kiya ya sirf phone chala rahi ho?",chips:["Saas ji, mujhe mashwra chahiye","Aaj khana kya banau?","Main alag ghar lena chahta hoon"]},
+  phupho:{name:"Phupho",emoji:"👩‍🦳",img:"",col:"#a855f7",tag:"Aap unke bhateeje/bhateeji hain",hi:"Aye haye mera bacha! Itne din baad yaad aayi phupho ki? Shaadi ki koi baat chali ya nahi?",chips:["Phupho salam!","Mera rishta kab hoga?","Main job dhoond raha hoon"]},
+  teacher:{name:"Teacher",emoji:"👨‍🏫",img:"",col:"#2563eb",tag:"Sawal poocho, lecture free milega",hi:"Baithiye. Sawal poochne se pehle ye jaan lein ke main is fan ka sab se bara ustaad hoon.",chips:["Sir, 2+2 kitne hote hain?","Paas kaise hoon?","Chhutti chahiye"]},
+  dost:{name:"Dost",emoji:"😜",img:"",col:"#ea580c",tag:"Bekaar yaar, roast ke liye tayyar",hi:"Oye! Zinda hai abhi tak? Bol kya musibat aayi hai?",chips:["Yaar mujhe crush ho gaya","Udhaar de na","Aaj kya plan hai?"]}
+};
+let cur="saas";const hist={saas:[],phupho:[],teacher:[],dost:[]};
+const $=id=>document.getElementById(id),log=$("log");
+const av=b=>b.img?`<img src="${b.img}" alt="">`:b.emoji;
+Object.entries(BOTS).forEach(([k,b])=>{
+  const el=document.createElement("button");el.className="bot";el.dataset.k=k;
+  el.innerHTML=`<div class="avatar">${av(b)}</div><span>${b.name}</span>`;
+  el.onclick=()=>select(k);$("picker").appendChild(el);
+});
+function select(k){
+  cur=k;speechSynthesis.cancel();const b=BOTS[k];
+  document.documentElement.style.setProperty("--acc",b.col);
+  document.querySelectorAll(".bot").forEach(e=>e.setAttribute("aria-pressed",e.dataset.k===k));
+  $("tag").textContent=b.tag;
+  if(!hist[k].length)hist[k].push({role:"bot",text:b.hi});
+  $("chips").innerHTML="";b.chips.forEach(c=>{const x=document.createElement("button");x.className="chip";x.textContent=c;x.onclick=()=>{$("txt").value=c;send()};$("chips").appendChild(x)});
+  render();
+}
+function render(){
+  log.innerHTML="";
+  hist[cur].forEach(m=>{
+    const me=m.role==="user",r=document.createElement("div");r.className="row "+(me?"me":"ai");
+    if(!me){const a=document.createElement("div");a.className="mini";a.innerHTML=av(BOTS[cur]);r.appendChild(a)}
+    const d=document.createElement("div");d.className="msg";
+    if(m.typing)d.innerHTML='<span class="dots"><span></span><span></span><span></span></span>';else d.textContent=m.text;
+    r.appendChild(d);log.appendChild(r);
+  });
+  log.scrollTop=log.scrollHeight;
+}
+function speak(t){
+  if(!$("voice").checked||!("speechSynthesis" in window))return;
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),vs=speechSynthesis.getVoices();
+  const v=vs.find(v=>/^ur/i.test(v.lang))||vs.find(v=>/^hi/i.test(v.lang));
+  if(v){u.voice=v;u.lang=v.lang}else u.lang="hi-IN";
+  u.rate={saas:.95,phupho:1,teacher:.9,dost:1.1}[cur];u.pitch={saas:.8,phupho:1.2,teacher:.7,dost:1.3}[cur];
+  speechSynthesis.speak(u);
+}
+async function send(){
+  const t=$("txt").value.trim();if(!t)return;
+  const bot=cur;$("txt").value="";
+  hist[bot].push({role:"user",text:t});
+  const msgs=hist[bot].map(m=>({role:m.role,text:m.text}));
+  hist[bot].push({role:"bot",typing:true,text:""});render();
+  let reply;
+  try{
+    const r=await fetch("/.netlify/functions/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,messages:msgs})});
+    reply=(await r.json()).reply;
+  }catch(e){reply="Network ka masla hai, dobara koshish karo."}
+  const last=hist[bot][hist[bot].length-1];last.typing=false;last.text=reply;
+  if(bot===cur){render();speak(reply)}
+}
+$("go").onclick=send;$("txt").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+select("saas");
+</script>
+</body>
+</html>
